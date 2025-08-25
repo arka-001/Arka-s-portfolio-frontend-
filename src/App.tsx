@@ -157,9 +157,9 @@ export default function App() {
           <EducationSection />
         </section>
 
-        <section id="testimonials" className="scroll-mt-20">
+        {/* <section id="testimonials" className="scroll-mt-20">
           <TestimonialsSection />
-        </section>
+        </section> */}
         
         <section id="contact" className="scroll-mt-20">
           <ContactSection />
