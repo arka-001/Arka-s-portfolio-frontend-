@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { motion } from 'framer-motion'; // Using framer-motion is more common with Next.js
+import { motion } from 'framer-motion';
 import { ArrowDown, Download, Mail } from 'lucide-react';
 import FloatingShapes from './FloatingShapes';
 import { apiService } from '../api';
@@ -27,34 +27,36 @@ const HeroSection = () => {
   useEffect(() => {
     const loadData = async () => {
       try {
+        // Fetch from both endpoints to combine hero text with about details (like profile image)
         const [heroInfo, aboutInfo] = await Promise.all([
           apiService.getHero(),
           apiService.getAbout()
         ]);
 
         // ** THIS IS THE CORRECTED PART **
-        // We construct the display data by picking the best fields from both API calls.
-        // The resume URL, email, and profile image come from the 'about' endpoint.
+        // Construct the display data by prioritizing fields from the hero-specific endpoint.
+        // The description now comes directly from `heroInfo`.
+        // Other details like the profile image and resume link are supplemented by `aboutInfo`.
         setDisplayData({
           name: heroInfo.name,
           tagline: heroInfo.tagline,
-          description: aboutInfo.description || heroInfo.description, // Use about's description, fallback to hero's
-          resume_url: aboutInfo.resume || '#', // Use the resume URL from the about data
-          contact_email: aboutInfo.email || heroInfo.contact_email, // Use about's email, fallback to hero's
-          profile_image_url: aboutInfo.profile_image_url,
+          description: heroInfo.description, // <-- FIXED: Always use the description from the hero API
+          resume_url: aboutInfo.resume || heroInfo.resume_url || '#', // Use the best available resume URL
+          contact_email: heroInfo.contact_email || aboutInfo.email, // Use the best available email
+          profile_image_url: aboutInfo.profile_image_url, // Profile image comes from the about data
         });
 
       } catch (error) {
         console.error("Failed to load hero section data:", error);
-        // Set fallback data on error
+        // Set fallback data on error, maintaining the same priority
         const fallbackHero = await apiService.getHero();
         const fallbackAbout = await apiService.getAbout();
         setDisplayData({
           name: fallbackHero.name,
           tagline: fallbackHero.tagline,
-          description: fallbackAbout.description,
-          resume_url: fallbackAbout.resume || '#',
-          contact_email: fallbackAbout.email || fallbackHero.contact_email,
+          description: fallbackHero.description, // <-- FIXED: Use fallback hero description
+          resume_url: fallbackAbout.resume || fallbackHero.resume_url || '#',
+          contact_email: fallbackHero.contact_email || fallbackAbout.email,
           profile_image_url: fallbackAbout.profile_image_url,
         });
       }
