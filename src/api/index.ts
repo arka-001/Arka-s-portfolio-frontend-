@@ -1,3 +1,5 @@
+// src/api/index.ts (No changes needed for WhatsApp functionality)
+
 // The API_BASE_URL is now pointing to your live PythonAnywhere server
 const API_BASE_URL = 'https://arka001.pythonanywhere.com/api';
 
@@ -67,7 +69,7 @@ export const apiService = {
       description: "I'm a passionate Full Stack Developer with expertise in modern web technologies.",
       profile_image_url: "https://via.placeholder.com/400",
       email: "your.email@example.com",
-      phone: "+1 234 567 890",
+      phone: "+1 234 567 890", // This is your fallback phone number
       location: "City, Country",
       github: "https://github.com/arka-001",
       linkedin: "#",
