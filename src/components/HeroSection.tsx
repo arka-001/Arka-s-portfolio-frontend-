@@ -3,8 +3,9 @@
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { ArrowDown, Download, Mail } from 'lucide-react';
+import { FaWhatsapp } from 'react-icons/fa'; // Import WhatsApp icon
 import FloatingShapes from './FloatingShapes';
-import { apiService } from '../api';
+import { apiService } from '../api'; // Assuming `../api/index.ts` is imported as `../api`
 
 // Combined type for the data this component will display
 interface DisplayData {
@@ -14,6 +15,7 @@ interface DisplayData {
   resume_url: string;
   contact_email: string;
   profile_image_url: string | null;
+  whatsapp_phone_number: string | null;
 }
 
 const HeroSection = () => {
@@ -23,27 +25,24 @@ const HeroSection = () => {
   const [isImageHovered, setIsImageHovered] = useState(false);
   const [isResumeHovered, setIsResumeHovered] = useState(false);
   const [isContactHovered, setIsContactHovered] = useState(false);
+  const [isWhatsAppHovered, setIsWhatsAppHovered] = useState(false);
 
   useEffect(() => {
     const loadData = async () => {
       try {
-        // Fetch from both endpoints to combine hero text with about details (like profile image)
         const [heroInfo, aboutInfo] = await Promise.all([
           apiService.getHero(),
           apiService.getAbout()
         ]);
 
-        // ** THIS IS THE CORRECTED PART **
-        // Construct the display data by prioritizing fields from the hero-specific endpoint.
-        // The description now comes directly from `heroInfo`.
-        // Other details like the profile image and resume link are supplemented by `aboutInfo`.
         setDisplayData({
           name: heroInfo.name,
           tagline: heroInfo.tagline,
-          description: heroInfo.description, // <-- FIXED: Always use the description from the hero API
-          resume_url: aboutInfo.resume || heroInfo.resume_url || '#', // Use the best available resume URL
-          contact_email: heroInfo.contact_email || aboutInfo.email, // Use the best available email
-          profile_image_url: aboutInfo.profile_image_url, // Profile image comes from the about data
+          description: heroInfo.description,
+          resume_url: aboutInfo.resume || heroInfo.resume_url || '#', 
+          contact_email: heroInfo.contact_email || aboutInfo.email,
+          profile_image_url: aboutInfo.profile_image_url,
+          whatsapp_phone_number: aboutInfo.phone || null,
         });
 
       } catch (error) {
@@ -54,10 +53,11 @@ const HeroSection = () => {
         setDisplayData({
           name: fallbackHero.name,
           tagline: fallbackHero.tagline,
-          description: fallbackHero.description, // <-- FIXED: Use fallback hero description
+          description: fallbackHero.description,
           resume_url: fallbackAbout.resume || fallbackHero.resume_url || '#',
           contact_email: fallbackHero.contact_email || fallbackAbout.email,
           profile_image_url: fallbackAbout.profile_image_url,
+          whatsapp_phone_number: fallbackAbout.phone || null,
         });
       }
     };
@@ -68,6 +68,16 @@ const HeroSection = () => {
     document.getElementById('about')?.scrollIntoView({ behavior: 'smooth' });
   };
   
+  const handleWhatsAppClick = () => {
+    if (displayData?.whatsapp_phone_number) {
+      const cleanedPhoneNumber = displayData.whatsapp_phone_number.replace(/[\s+()-]/g, '');
+      const whatsappMessage = 'Hello Arka, I saw your portfolio and would like to connect!';
+      window.open(`https://wa.me/${cleanedPhoneNumber}?text=${encodeURIComponent(whatsappMessage)}`, '_blank');
+    } else {
+      alert("WhatsApp number not available. Please check the About section in the admin.");
+    }
+  };
+
   // --- INLINE CSS STYLES ---
 
   const nameGlowStyle: React.CSSProperties = {
@@ -86,6 +96,7 @@ const HeroSection = () => {
   const imageContainerStyle: React.CSSProperties = {
     boxShadow: `inset 0 0 0 2px rgba(0,0,0,0.5), 0 0 15px rgba(255, 255, 255, 0.2)`,
     transition: 'box-shadow 0.3s ease-in-out',
+    cursor: 'pointer', // <<< New: Add cursor pointer to image container
     ...(isImageHovered && {
       boxShadow: `inset 0 0 0 2px rgba(0,0,0,0.5), 0 0 30px rgba(255, 255, 255, 0.4)`
     })
@@ -93,6 +104,7 @@ const HeroSection = () => {
 
   const buttonBaseStyle: React.CSSProperties = {
     transition: 'box-shadow 0.3s ease-in-out, background-color 0.3s ease-in-out',
+    cursor: 'pointer', // <<< New: Apply cursor pointer to all buttons
   };
 
   const resumeButtonStyle: React.CSSProperties = {
@@ -106,6 +118,13 @@ const HeroSection = () => {
     ...buttonBaseStyle,
     ...(isContactHovered && {
       boxShadow: '0 0 15px rgba(139, 92, 246, 0.5)'
+    })
+  };
+
+  const whatsappButtonStyle: React.CSSProperties = {
+    ...buttonBaseStyle,
+    ...(isWhatsAppHovered && {
+      boxShadow: '0 0 15px rgba(34, 197, 94, 0.5)' // Green glow for WhatsApp
     })
   };
 
@@ -157,19 +176,22 @@ const HeroSection = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 1.2 }}
-            className="flex flex-col sm:flex-row gap-6 justify-center lg:justify-start items-center"
+            className="flex flex-col sm:flex-row flex-wrap gap-6 justify-center lg:justify-start items-center" 
           >
-            <a 
-              href={displayData.resume_url} 
-              className="group px-6 py-3 font-exo font-bold text-white rounded-lg bg-white/5 border border-white/10 backdrop-blur-sm hover:bg-white/10 flex items-center gap-2"
-              style={resumeButtonStyle}
-              onMouseEnter={() => setIsResumeHovered(true)}
-              onMouseLeave={() => setIsResumeHovered(false)}
-              target="_blank" // Open resume in a new tab
-              rel="noopener noreferrer"
-            >
-              <Download className="w-5 h-5 transition-transform group-hover:-translate-y-0.5" /> Download Resume
-            </a>
+            {displayData.resume_url && displayData.resume_url !== '#' && (
+              <a 
+                href={displayData.resume_url} 
+                className="group px-6 py-3 font-exo font-bold text-white rounded-lg bg-white/5 border border-white/10 backdrop-blur-sm hover:bg-white/10 flex items-center gap-2"
+                style={resumeButtonStyle}
+                onMouseEnter={() => setIsResumeHovered(true)}
+                onMouseLeave={() => setIsResumeHovered(false)}
+                target="_blank" 
+                rel="noopener noreferrer"
+              >
+                <Download className="w-5 h-5 transition-transform group-hover:-translate-y-0.5" /> Download Resume
+              </a>
+            )}
+            
             <a 
               href={`mailto:${displayData.contact_email}`} 
               className="group px-6 py-3 font-exo font-bold text-white rounded-lg bg-white/5 border border-white/10 backdrop-blur-sm hover:bg-white/10 flex items-center gap-2"
@@ -179,6 +201,19 @@ const HeroSection = () => {
             >
               <Mail className="w-5 h-5 transition-transform group-hover:-translate-y-0.5" /> Get In Touch
             </a>
+
+            {displayData.whatsapp_phone_number && (
+              <button
+                onClick={handleWhatsAppClick}
+                className="group px-6 py-3 font-exo font-bold text-white rounded-lg bg-green-500/10 border border-green-500/20 backdrop-blur-sm hover:bg-green-500/20 flex items-center gap-2"
+                style={whatsappButtonStyle}
+                onMouseEnter={() => setIsWhatsAppHovered(true)}
+                onMouseLeave={() => setIsWhatsAppHovered(false)}
+                aria-label="Chat on WhatsApp"
+              >
+                <FaWhatsapp className="w-5 h-5 transition-transform group-hover:-translate-y-0.5" /> Chat on WhatsApp
+              </button>
+            )}
           </motion.div>
         </div>
 
@@ -188,11 +223,15 @@ const HeroSection = () => {
           transition={{ duration: 1, delay: 0.5, type: "spring" }}
           className="flex justify-center"
         >
+          {/* <<< New: Add onClick to image container to make it interactive like a button */}
           <div 
             className="relative w-72 h-72 md:w-80 md:h-80 p-1.5 rounded-full"
             style={imageContainerStyle}
             onMouseEnter={() => setIsImageHovered(true)}
             onMouseLeave={() => setIsImageHovered(false)}
+            onClick={scrollToAbout} // <<< New: Make image clickable to scroll to about
+            aria-label={`View profile of ${displayData.name}`} // <<< New: Add accessibility label
+            role="button" // <<< New: Indicate it's an interactive element
           >
               <img
                 src={displayData.profile_image_url || ''}
