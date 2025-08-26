@@ -173,7 +173,7 @@ export default function App() {
             © 2025 Arka Maitra. Built with Django DRF, React, and Next.js.
           </p>
           <p className="text-gray-500 font-exo text-sm mt-2">
-            Designed Arka Maitra.
+            Designed by Arka Maitra.
           </p>
         </div>
       </footer>
